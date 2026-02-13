@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Will You Be My Valentine?</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Floating Hearts Background -->
+    <div class="hearts-bg" id="hearts-bg"></div>
+
+    <!-- Question Section -->
+    <div id="question-container" class="container">
+        <img
+            id="asking-gif"
+            src="https://media.giphy.com/media/3o75270aMFqCSoNwje/giphy.gif"
+            alt="Pleading eyes"
+            class="gif"
+        >
+        <h1>Will you be my Valentine?</h1>
+        <div class="buttons">
+            <button id="yes-btn" class="btn yes-btn">Yes</button>
+            <button id="no-btn" class="btn no-btn">No</button>
+        </div>
+    </div>
+
+    <!-- Success Section (hidden initially) -->
+    <div id="success-container" class="container hidden">
+        <img
+            src="https://media.giphy.com/media/26tOZ42Mg6pbTUPHW/giphy.gif"
+            alt="Celebration"
+            class="gif"
+        >
+        <h1>I knew you'd say yes!</h1>
+        <p class="hearts">&#10084; &#10084; &#10084;</p>
+
+        <!-- Love Loading Spinner -->
+        <div id="love-loader" class="love-loader hidden">
+            <div class="love-loader-heart">&#10084;</div>
+            <p class="love-loader-text">Preparing something special...</p>
+        </div>
+
+        <!-- Love Letter Section -->
+        <div id="love-letter-section" class="love-letter-section hidden">
+            <p class="section-prompt">You have a letter...</p>
+
+            <!-- Letter content (revealed after clicking envelope) -->
+            <div class="letter-paper hidden" id="letter-paper">
+                <p class="letter-greeting">My Dearest Valentine,</p>
+                <p class="letter-body">
+                    Every moment with you feels like a beautiful dream I never want to wake up from.
+                    You are my sunshine on cloudy days, my calm in every storm, and the reason
+                    my heart skips a beat. I am so grateful the universe brought us together.
+                </p>
+                <p class="letter-closing">Forever yours,<br><span class="letter-signature">&#10084; Your Valentine</span></p>
+            </div>
+
+            <!-- Envelope (clickable) -->
+            <div class="envelope-wrapper" id="envelope-wrapper">
+                <div class="envelope">
+                    <div class="envelope-back">
+                        <p class="envelope-msg">You make my heart smile every single day &#10084;</p>
+                    </div>
+                    <div class="envelope-front" id="envelope-front">
+                        <div class="envelope-flap" id="envelope-flap"></div>
+                        <p class="envelope-label">&#128140; Click to open</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gift Loading Spinner -->
+        <div id="love-loader-2" class="love-loader hidden">
+            <div class="love-loader-heart">&#10084;</div>
+            <p class="love-loader-text">Preparing something special...</p>
+        </div>
+
+        <!-- Gift Box Section -->
+        <div id="gift-box-section" class="gift-box-section hidden">
+            <p class="section-prompt">And a little surprise for you...</p>
+            <div class="gift-box-wrapper" id="gift-box-wrapper">
+                <div class="gift-box" id="gift-box">
+                    <div class="gift-lid" id="gift-lid">
+                        <div class="gift-bow"></div>
+                    </div>
+                    <div class="gift-base">
+                        <div class="gift-ribbon-v"></div>
+                        <div class="gift-ribbon-h"></div>
+                    </div>
+                </div>
+                <p class="gift-label">&#127873; Tap to unwrap!</p>
+            </div>
+
+            <div class="voucher-cards-container hidden" id="voucher-cards-container">
+                <div class="voucher-card" data-delay="0">
+                    <span class="voucher-emoji">&#129303;</span>
+                    <p class="voucher-text">One Free Hug</p>
+                    <p class="voucher-fine-print">Redeemable anytime, anywhere</p>
+                </div>
+                <div class="voucher-card" data-delay="400">
+                    <span class="voucher-emoji">&#9992;</span>
+                    <p class="voucher-text">Paris Travel</p>
+                    <p class="voucher-fine-print">City of love awaits us!</p>
+                </div>
+                <div class="voucher-card" data-delay="800">
+                    <span class="voucher-emoji">&#127858;</span>
+                    <p class="voucher-text">Breakfast in Bed</p>
+                    <p class="voucher-fine-print">Made with extra love</p>
+                </div>
+                <div class="voucher-card" data-delay="1200">
+                    <span class="voucher-emoji">&#128139;</span>
+                    <p class="voucher-text">Unlimited Kisses</p>
+                    <p class="voucher-fine-print">No expiration date</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio and Music Toggle -->
+    <audio id="bg-music" loop preload="auto">
+        <source src="./oxygen.mp3" type="audio/mpeg">
+    </audio>
+    <button id="music-toggle" class="music-toggle hidden" title="Toggle Music">
+        <span class="music-icon">&#9835;</span>
+        <span class="music-status">ON</span>
+    </button>
+
+    <!-- Sneaky popup -->
+    <div id="sneaky-popup" class="sneaky-popup hidden">
+        <div class="sneaky-popup-content">
+            <img src="https://media.giphy.com/media/10JhviFuU2gWD6/giphy.gif" alt="Laughing" class="sneaky-gif">
+            <h2>Haha nice try!</h2>
+            <p id="sneaky-message"></p>
+            <button id="sneaky-close" class="btn yes-btn">OK fine...</button>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
