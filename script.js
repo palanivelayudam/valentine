@@ -21,10 +21,12 @@ $(document).ready(function () {
 
     // ===== NO BUTTON ESCAPE LOGIC =====
 
-    const ESCAPE_RADIUS = 100;  // how close mouse can get before button runs
-    const PADDING = 10;         // min distance from viewport edges
+    const ESCAPE_RADIUS = 100;
+    const PADDING = 10;
+    const MAX_ESCAPES = 250;
+    let escapeCount = 0;
+    let escapeDisabled = false;
 
-    // Get safe viewport bounds (excluding scrollbars)
     function getViewport() {
         return {
             w: document.documentElement.clientWidth,
@@ -32,7 +34,6 @@ $(document).ready(function () {
         };
     }
 
-    // Force position to always be inside the visible viewport
     function forceInsideViewport(x, y) {
         const vp = getViewport();
         const btnW = $noBtn.outerWidth();
@@ -42,7 +43,6 @@ $(document).ready(function () {
         return { x: x, y: y };
     }
 
-    // Move the No button - always clamped to viewport
     function moveNoBtn(x, y) {
         const safe = forceInsideViewport(x, y);
         $noBtn.css({
@@ -53,37 +53,34 @@ $(document).ready(function () {
         });
     }
 
-    // Get button center
     function getBtnCenter() {
         const rect = $noBtn[0].getBoundingClientRect();
         return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     }
 
-    // Get container center
-    function getContainerCenter() {
-        const rect = $questionContainer[0].getBoundingClientRect();
-        return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-    }
-
-    // Calculate distance between two points
     function dist(x1, y1, x2, y2) {
         return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
     }
 
     function escapeFromCursor(mouseX, mouseY) {
-        const vp = getViewport();
+        if (escapeDisabled) return;
+        escapeCount++;
+        if (escapeCount >= MAX_ESCAPES) {
+            escapeDisabled = true;
+            // Reset button to normal position
+            $noBtn.css({ position: '', left: '', top: '', zIndex: '' });
+            return;
+        }
         const btnW = $noBtn.outerWidth();
         const btnH = $noBtn.outerHeight();
         const containerRect = $questionContainer[0].getBoundingClientRect();
         const containerCX = containerRect.left + containerRect.width / 2;
         const containerCY = containerRect.top + containerRect.height / 2;
 
-        // Generate candidate positions around the container (close by)
         const candidates = [];
         const spots = 12;
         for (let i = 0; i < spots; i++) {
             const angle = (i / spots) * 2 * Math.PI;
-            // Place buttons just outside the container edges
             const rx = containerRect.width / 2 + btnW / 2 + 20;
             const ry = containerRect.height / 2 + btnH / 2 + 20;
             const cx = containerCX + Math.cos(angle) * rx - btnW / 2;
@@ -91,13 +88,11 @@ $(document).ready(function () {
             candidates.push({ x: cx, y: cy });
         }
 
-        // Also add positions at container edges (top/bottom/left/right centers)
         candidates.push({ x: containerCX - btnW / 2, y: containerRect.top - btnH - 15 });
         candidates.push({ x: containerCX - btnW / 2, y: containerRect.bottom + 15 });
         candidates.push({ x: containerRect.left - btnW - 15, y: containerCY - btnH / 2 });
         candidates.push({ x: containerRect.right + 15, y: containerCY - btnH / 2 });
 
-        // Clamp all candidates inside viewport and score them
         let bestPos = null;
         let bestScore = -1;
 
@@ -107,9 +102,7 @@ $(document).ready(function () {
             const centerY = safe.y + btnH / 2;
             const distFromMouse = dist(centerX, centerY, mouseX, mouseY);
 
-            // Only consider positions far enough from cursor
             if (distFromMouse > ESCAPE_RADIUS * 0.8) {
-                // Prefer positions closer to container but far from mouse
                 const distFromContainer = dist(centerX, centerY, containerCX, containerCY);
                 const score = distFromMouse - distFromContainer * 0.5;
                 if (score > bestScore) {
@@ -119,7 +112,6 @@ $(document).ready(function () {
             }
         }
 
-        // Fallback: if no good candidate, just pick the one farthest from mouse
         if (!bestPos) {
             let maxDist = -1;
             for (const c of candidates) {
@@ -137,6 +129,33 @@ $(document).ready(function () {
         }
     }
 
+    // Touch support
+    $noBtn.on('touchstart', function (e) {
+        if (escapeDisabled) return;
+        e.preventDefault();
+        const touch = e.originalEvent.touches[0];
+        escapeFromCursor(touch.clientX, touch.clientY);
+    });
+
+    // Track mouse on entire document
+    $(document).on('mousemove', function (e) {
+        if (escapeDisabled) return;
+        if ($questionContainer.hasClass('hidden')) return;
+
+        const btnCenter = getBtnCenter();
+        const d = dist(btnCenter.x, btnCenter.y, e.clientX, e.clientY);
+
+        if (d < ESCAPE_RADIUS) {
+            escapeFromCursor(e.clientX, e.clientY);
+        }
+    });
+
+    // Ensure button stays in viewport on resize
+    $(window).on('resize', function () {
+        const rect = $noBtn[0].getBoundingClientRect();
+        moveNoBtn(rect.left, rect.top);
+    });
+
     // ===== SNEAKY POPUP FOR TAB+ENTER =====
 
     const sneakyMessages = [
@@ -152,10 +171,13 @@ $(document).ready(function () {
     const $sneakyPopup = $('#sneaky-popup');
     const $sneakyMessage = $('#sneaky-message');
     const $sneakyClose = $('#sneaky-close');
+    let sneakyGifIndex = 0;
 
     function showSneakyPopup() {
         const msg = sneakyMessages[Math.floor(Math.random() * sneakyMessages.length)];
         $sneakyMessage.text(msg);
+        $('#sneaky-gif').attr('src', noGifs[sneakyGifIndex]);
+        sneakyGifIndex = (sneakyGifIndex + 1) % noGifs.length;
         $sneakyPopup.removeClass('hidden');
     }
 
@@ -176,38 +198,34 @@ $(document).ready(function () {
         return false;
     });
 
-    // Block all clicks on No button
-    $noBtn.on('click mousedown', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        return false;
+    // ===== NO BUTTON GIF CYCLE =====
+    const noGifs = [
+        'https://codekagehq.github.io/Ask-out-your-Valentine/images/image1.gif',
+        'https://codekagehq.github.io/Ask-out-your-Valentine/images/image2.gif',
+        'https://codekagehq.github.io/Ask-out-your-Valentine/images/image3.gif',
+        'https://codekagehq.github.io/Ask-out-your-Valentine/images/image4.gif',
+        'https://codekagehq.github.io/Ask-out-your-Valentine/images/image5.gif'
+    ];
+    const noTexts = [
+        'No', 'Are you sure?', 'Really sure?', 'Think again!', 'Please?'
+    ];
+    let noClickCount = 0;
+    let yesBtnScale = 1;
+
+    $noBtn.on('click', function () {
+        noClickCount++;
+        var gifIndex = Math.min(noClickCount, noGifs.length) - 1;
+        $('#asking-gif').attr('src', noGifs[gifIndex]);
+
+        // Update No button text
+        var textIndex = Math.min(noClickCount, noTexts.length) - 1;
+        $noBtn.text(noTexts[textIndex]);
+
+        // Grow the Yes button
+        yesBtnScale += 0.2;
+        $yesBtn.css('transform', 'scale(' + yesBtnScale + ')');
     });
 
-    // Touch support
-    $noBtn.on('touchstart', function (e) {
-        e.preventDefault();
-        const touch = e.originalEvent.touches[0];
-        escapeFromCursor(touch.clientX, touch.clientY);
-    });
-
-    // Track mouse on entire document
-    $(document).on('mousemove', function (e) {
-        // Only run if question container is visible
-        if ($questionContainer.hasClass('hidden')) return;
-
-        const btnCenter = getBtnCenter();
-        const d = dist(btnCenter.x, btnCenter.y, e.clientX, e.clientY);
-
-        if (d < ESCAPE_RADIUS) {
-            escapeFromCursor(e.clientX, e.clientY);
-        }
-    });
-
-    // Also ensure button stays in viewport on window resize
-    $(window).on('resize', function () {
-        const rect = $noBtn[0].getBoundingClientRect();
-        moveNoBtn(rect.left, rect.top);
-    });
 
     // ===== BACKGROUND MUSIC =====
     const bgMusic = $('#bg-music')[0];
